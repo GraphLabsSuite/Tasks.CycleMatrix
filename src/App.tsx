@@ -4,7 +4,8 @@ import './App.css';
 import {select} from 'd3-selection'
 import {Matrix, } from 'graphlabs.core.lib';
 import {FunctionComponent} from "react";
-import {Template, ToolButtonList, Toolbar, store, IEdgeView, IGraphView} from "graphlabs.core.template";
+import {Graph, IEdge, IGraph, IVertex, SccBuilder} from 'graphlabs.core.graphs'
+import {Template, ToolButtonList, Toolbar, store, IEdgeView, IGraphView, GraphVisualizer} from "graphlabs.core.template";
 
 let tree_vertex: string[] = [];
 let help: string[] = [];
@@ -13,6 +14,7 @@ let tree_edge: string[] = [];
 class App extends Template {
 
     matrix: number[][] = [];
+    graph: IGraph< IVertex, IEdge> = this.my_graph();
 
     constructor(props: {}) {
         super(props);
@@ -20,8 +22,38 @@ class App extends Template {
         this.handler = this.handler.bind(this);
     }
 
+    my_graph():IGraph<IVertex, IEdge>{
+        const data = sessionStorage.getItem('variant');
+        let graph: IGraph<IVertex, IEdge> = new Graph() as unknown as IGraph<IVertex, IEdge>;
+        let objectData;
+        try {
+            objectData = JSON.parse(data || 'null');
+            console.log('The variant is successfully parsed');
+        } catch (err) {
+            console.log('Error while JSON parsing');
+        }
+        console.log(this.graphManager(objectData.data[0].value));
+        if (data) {
+            graph = this.graphManager(objectData.data[0].value);
+            console.log('The graph is successfully built from the variant');
+        }
+        return graph;
+    }
+
     handler(values: number[][]) {
         this.matrix = values;
+    }
+
+    getArea(): React.SFC<{}> {
+        //this.graph = this.get_graph();
+        this.graph = this.my_graph();
+        //store.getState().graph = this.graph;
+        return () => <GraphVisualizer
+            graph={this.graph}
+            adapterType={'readable'}
+            incidentEdges={false}
+            namedEdges={false}
+        />;
     }
 
     change_color(color: string) {
